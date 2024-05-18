@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.security.Principal;
 import java.util.Optional;
 
 @RestController
@@ -22,8 +23,8 @@ public class CashCardController {
     }
 
     @GetMapping("/{requestedId}")
-    private ResponseEntity<CashCard> findById(@PathVariable Long requestedId) {
-        Optional<CashCard> cashCardOptional = cashCardRepository.findById(requestedId);
+    private ResponseEntity<CashCard> findById(@PathVariable Long requestedId, Principal principal) {
+        Optional<CashCard> cashCardOptional  = findCashCard(requestedId, principal);
         if (cashCardOptional.isPresent()) {
             return ResponseEntity.ok(cashCardOptional.get());
         } else {
@@ -31,9 +32,15 @@ public class CashCardController {
         }
     }
 
+    private Optional<CashCard> findCashCard(Long requestedId, Principal principal) {
+        return Optional.ofNullable(cashCardRepository.findByIdAndOwner(requestedId, principal.getName()));
+    }
+
     @PostMapping
-    private ResponseEntity<CashCard> createCashCard(@RequestBody CashCard newCashCard, UriComponentsBuilder ucb) {
-        CashCard savedCard = cashCardRepository.save(newCashCard);
+    private ResponseEntity<CashCard> createCashCard(@RequestBody CashCard newCashCard, UriComponentsBuilder ucb,
+                                                    Principal principal) {
+        CashCard cardWithOwner = new CashCard(null, newCashCard.amount(), principal.getName());
+        CashCard savedCard = cashCardRepository.save(cardWithOwner);
         URI newCardLocation = ucb
                 .path("cashcards/{id}")
                 .buildAndExpand(savedCard.id())
@@ -42,8 +49,8 @@ public class CashCardController {
     }
 
     @GetMapping
-    private ResponseEntity<Iterable<CashCard>> getList(Pageable pageable) {
-        Page<CashCard> page =  cashCardRepository.findAll(
+    private ResponseEntity<Iterable<CashCard>> getList(Pageable pageable, Principal principal) {
+        Page<CashCard> page =  cashCardRepository.findByOwner(principal.getName(),
                 PageRequest.of(
                         pageable.getPageNumber(),
                         pageable.getPageSize(),
@@ -51,5 +58,18 @@ public class CashCardController {
                 )
         );
         return ResponseEntity.ok(page.getContent());
+    }
+
+    @PutMapping("/{requestedId}")
+    private ResponseEntity<Void> putCashCard(@PathVariable Long requestedId, @RequestBody CashCard cashCardUpdate, Principal principal) {
+        Optional<CashCard> existOptional  = findCashCard(requestedId, principal);
+        if (!existOptional.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        CashCard existingCard = existOptional.get();
+
+        CashCard updatedCard = new CashCard(existingCard.id(), cashCardUpdate.amount(), principal.getName());
+        cashCardRepository.save(updatedCard);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -24,6 +24,9 @@ dependencies {
 	// data dependencies
 	implementation 'org.springframework.data:spring-data-jdbc'
 	implementation 'com.h2database:h2'
+
+	// spring secutiry
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 }
 
 tasks.named('bootBuildImage') {
