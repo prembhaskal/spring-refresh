@@ -19,7 +19,7 @@ class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(request -> request
                         .requestMatchers("/cashcards/**")
-                        .hasRole("CARD-OWNER") // enable RBAC instead of authenticated() which allows any logged in user
+                        .hasRole("CARD-OWNER") // enable RBAC instead of authenticated() which allows any logged-in user
                 )
                 .httpBasic(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable());
@@ -45,6 +45,12 @@ class SecurityConfig {
                 .password(passwordEncoder.encode("qrs456"))
                 .roles("NON-OWNER")
                 .build();
-        return new InMemoryUserDetailsManager(sarah, hank);
+        UserDetails kumar = users
+                .username("kumar2")
+                .password(passwordEncoder.encode("xyz789"))
+                .roles("CARD-OWNER")
+                .build();
+
+        return new InMemoryUserDetailsManager(sarah, hank, kumar);
     }
 }
