@@ -59,7 +59,7 @@ public class RewardsConfig {
     // Set this by adding a constructor.
     private final DataSource dataSource;
 
-    // constructor injection, autowired is optional
+    // constructor injection, autowired is optional when only one constructor is present.
     public RewardsConfig(DataSource dataSource) {
         this.dataSource = dataSource;
     }
